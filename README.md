@@ -18,6 +18,25 @@ On first startup, create the administrator account. Passwords must be at least 1
 
 For the isolated 10-customer sample and staff-training walkthrough, follow [TRAINING_GUIDE.md](./TRAINING_GUIDE.md) and run [seed_demo.py](./seed_demo.py). The training app selects its database with the `SHIPPINGFLOW_DATABASE` environment variable; do not point it at the live database when resetting demo data.
 
+## Deploy the existing Flask app with persistent SQLite, and use Vercel
+
+Vercel's serverless filesystem is temporary, so it cannot safely host this app's SQLite database or uploaded cargo documents. Keep the existing Flask app and SQLite design by running the API on a host with a persistent disk, then use Vercel to publish the dashboard and proxy its `/api/*` requests to the Flask service.
+
+1. In Render, create a **Blueprint** and connect this GitHub repository. Render reads [render.yaml](./render.yaml), which starts the unchanged Flask app with Gunicorn, creates a persistent disk at `/var/data`, stores the database and uploads there, and generates a private Flask session key.
+2. Use a paid Render instance plan that supports persistent disks. Do not remove or replace the disk; its contents are the live database, uploads and login/session configuration.
+3. Deploy the Blueprint and wait for its health check at `/api/health` to pass. Copy the service's HTTPS URL, for example `https://shippingflow-api.onrender.com`.
+4. In [vercel.json](./vercel.json), add an API rewrite before the static asset rewrite, replacing the example service hostname with the exact URL Render assigned:
+   ```json
+   {
+     "source": "/api/:path*",
+     "destination": "https://shippingflow-api.onrender.com/api/:path*"
+   }
+   ```
+   Keep the existing `/static/:path*` rewrite. Commit and push `vercel.json`; Vercel will redeploy. Because API calls stay on the Vercel site origin and Vercel proxies them server-side, the browser's login cookie continues to work without enabling broad cross-origin access.
+5. Before staff start using the new service, migrate the current `database/shippingflow.db` and `database/uploads/` to `/var/data/shippingflow.db` and `/var/data/uploads/` using a secure transfer path. These files are intentionally excluded from Git. Verify the existing accounts and cargo after transfer and back up both files; never put database files, uploads, or account secrets in the repository.
+
+The Vercel project remains the staff-facing address, while Render runs the same Flask application and persists the original SQLite data. The app's database console only queries the configured Render database; it does not provide a data migration or restore-upload interface.
+
 ## Operational workflows
 
 - **Customers:** admins register and correct customer/company and delivery destination details. Customer code remains the shipment ownership key.
