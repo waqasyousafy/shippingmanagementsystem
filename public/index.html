@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MH Global Customs Solutions</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <section class="auth-screen" id="authScreen">
+      <div class="auth-brand">
+        <span class="brand-mark">MH</span>
+        <p class="eyebrow">MH Global Customs Solutions</p>
+        <h1>ShippingFlow</h1>
+        <p>Secure operations for every shipment, team, and handoff.</p>
+      </div>
+      <div class="auth-panel">
+        <p class="eyebrow" id="authEyebrow">Account access</p>
+        <h2 id="authTitle">Sign in</h2>
+        <p class="auth-copy" id="authDescription">Use your assigned account to continue.</p>
+        <p class="form-error" id="authError" role="alert" hidden></p>
+        <form id="loginForm" hidden>
+          <label>Username<input name="username" autocomplete="username" required /></label>
+          <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
+          <button type="submit" class="primary-btn">Sign in</button>
+        </form>
+        <form id="setupForm" hidden>
+          <label>Admin username<input name="username" autocomplete="username" minlength="3" maxlength="64" required /></label>
+          <label>Create password<input name="password" type="password" autocomplete="new-password" minlength="12" required /></label>
+          <label>Confirm password<input name="confirmPassword" type="password" autocomplete="new-password" minlength="12" required /></label>
+          <button type="submit" class="primary-btn">Create administrator</button>
+        </form>
+      </div>
+    </section>
+
+    <div class="shell" id="appShell" hidden>
+      <aside class="sidebar">
+        <a class="brand" href="#overview"><span class="brand-mark">MH</span><span>MH Global<small>ShippingFlow</small></span></a>
+        <nav>
+          <a class="active" href="#overview" data-page-link="overview">Overview</a>
+          <a href="#customers" data-page-link="customers" data-permission="customers:read">Customers</a>
+          <a href="#receiving" data-page-link="receiving" data-permission="shipments:receive">Cargo receiving</a>
+          <a href="#loading" data-page-link="loading" data-permission="shipments:read">Container loading</a>
+          <a href="#status" data-page-link="status" data-permission="shipments:status">Shipment status</a>
+          <a href="#users" data-page-link="users" data-permission="users:manage">User access</a>
+          <a href="#database" data-page-link="database" data-permission="database:manage">Database</a>
+          <a href="#billing" data-page-link="billing" data-permission="invoices:read">Billing</a>
+          <a href="#audit" data-page-link="audit" data-permission="audit:read">Audit history</a>
+        </nav>
+        <div class="sidebar-account">
+          <span class="avatar" id="userAvatar">U</span>
+          <span><strong id="userName"></strong><small id="userRole"></small></span>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Cargo tracking system</p>
+            <h2>Operations dashboard</h2>
+          </div>
+          <div class="topbar-actions">
+            <button id="refreshBtn" class="secondary-btn">Refresh</button>
+            <button id="changePasswordBtn" class="secondary-btn">Change password</button>
+            <button id="logoutBtn" class="primary-btn">Sign out</button>
+          </div>
+        </header>
+
+        <section id="overviewView" class="overview-section page-view" data-page-view="overview">
+          <div class="card-grid">
+            <article class="stat-card"><span>Customers</span><strong id="customerCount">0</strong><small>Registered accounts</small></article>
+            <article class="stat-card"><span>Total shipments</span><strong id="shipmentCount">0</strong><small>Across all customers</small></article>
+            <article class="stat-card"><span>In progress</span><strong id="activeCount">0</strong><small>Not yet delivered</small></article>
+            <article class="stat-card stat-highlight"><span>Awaiting loading</span><strong id="pendingCount">0</strong><small>Needs warehouse action</small></article>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="panel status-panel">
+              <div class="section-heading"><div><p class="eyebrow">At a glance</p><h3>Shipment status</h3></div></div>
+              <div id="statusSummary" class="status-summary"></div>
+            </article>
+            <article class="panel table-panel">
+              <div class="section-heading">
+                <div><p class="eyebrow">Live register</p><h3>Recent shipments</h3></div>
+                <div class="table-tools">
+                  <input id="shipmentSearch" type="search" placeholder="Search tracking, customer or container" aria-label="Search tracking, customer or container" />
+                  <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option></select>
+                </div>
+              </div>
+              <div class="table-scroll">
+                <table><thead><tr><th>Tracking</th><th>Customer</th><th>Received</th><th>Supplier / mark</th><th>Container portion status</th><th>Loaded / remaining</th><th>Current status</th><th>Pakistan ETA</th><th>Delivery estimate</th><th>Last updated</th><th>Documents</th><th>Actions</th></tr></thead><tbody id="shipmentRows"></tbody></table>
+              </div>
+              <p class="empty-state" id="shipmentEmpty" hidden>No shipments match this view.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="content-grid page-view" data-page-view="customers">
+          <article class="panel" id="customers" data-permission="customers:read">
+            <div class="section-heading"><div><p class="eyebrow">Directory</p><h3>Customers</h3></div></div>
+            <form id="customerForm" data-permission="customers:write">
+              <input name="companyName" placeholder="Company name" required />
+              <input name="customerCode" placeholder="Customer code" required />
+              <input name="deliveryCity" placeholder="Delivery city" />
+              <input name="deliveryAddress" placeholder="Delivery address" />
+              <button type="submit" class="primary-btn">Register customer</button>
+            </form>
+            <form id="customerEditForm" data-permission="customers:edit">
+              <h4>Correct customer delivery details</h4>
+              <select name="customerCode" id="customerEditSelect" required><option value="">Select customer</option></select>
+              <input name="companyName" placeholder="Company name" required />
+              <input name="deliveryCity" placeholder="Delivery city" />
+              <input name="deliveryAddress" placeholder="Delivery address" />
+              <button type="submit" class="secondary-btn">Save customer corrections</button>
+            </form>
+            <div class="table-scroll customer-table-wrap"><table><thead><tr><th>Customer</th><th>Code</th><th>Destination</th><th>Shipments</th><th>Actions</th></tr></thead><tbody id="customerRows"></tbody></table></div>
+          </article>
+
+        </section>
+
+        <section class="content-grid page-view" data-page-view="receiving">
+          <article class="panel" id="receiving" data-permission="shipments:receive">
+            <div class="section-heading"><div><p class="eyebrow">Warehouse</p><h3>Cargo receiving</h3></div></div>
+            <form id="receivingForm">
+              <select name="customerCode" id="receivingCustomer" required><option value="">Select customer</option></select>
+              <input name="trackingNumber" placeholder="Tracking number" required />
+              <input name="shippingMark" placeholder="Shipping mark" />
+              <input name="supplierName" placeholder="Supplier name" />
+              <label>Received on<input name="warehouseReceivingDate" type="date" required /></label>
+              <input name="goodsDescription" placeholder="Goods description" required />
+              <input name="cartons" type="number" min="0" placeholder="Cartons" required />
+              <input name="weightKg" type="number" min="0" step="0.1" placeholder="Weight (kg)" />
+              <input name="cbm" type="number" min="0" step="0.1" placeholder="CBM" />
+              <label>Cargo photos (JPEG/PNG)<input name="photos" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple /></label>
+              <label>Packing list (PDF)<input name="packingList" type="file" accept=".pdf,application/pdf" /></label>
+              <button type="submit" class="primary-btn">Receive cargo</button>
+            </form>
+          </article>
+          <article class="panel" data-permission="shipments:receive">
+            <div class="section-heading"><div><p class="eyebrow">Cargo documents</p><h3>Attach documents to an existing lot</h3></div></div>
+            <form id="documentForm">
+              <select name="shipmentId" id="documentShipment" required><option value="">Select cargo lot</option></select>
+              <label>Cargo photos (JPEG/PNG)<input name="photos" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple /></label>
+              <label>Packing list (PDF)<input name="packingList" type="file" accept=".pdf,application/pdf" /></label>
+              <button type="submit" class="primary-btn">Upload documents</button>
+            </form>
+          </article>
+
+        </section>
+
+        <section class="content-grid page-view" data-page-view="loading">
+          <article class="panel" id="loading" data-permission="shipments:operate">
+            <div class="section-heading"><div><p class="eyebrow">Container</p><h3>Loading details</h3></div></div>
+            <form id="loadingForm">
+              <select name="shipmentId" id="loadingShipment" required><option value="">Select shipment</option></select>
+              <input name="containerNumber" placeholder="Container number" required />
+              <label>Loading date<input name="loadingDate" type="date" required /></label>
+              <input name="loadedCartons" type="number" min="0" placeholder="Loaded cartons" required />
+              <p class="field-note">Remaining cartons are calculated from received cartons and all container portions.</p>
+              <input name="departurePort" placeholder="Departure port" />
+              <input name="destinationPort" placeholder="Destination port" />
+              <input name="vessel" placeholder="Vessel" />
+              <input name="voyage" placeholder="Voyage" />
+              <input name="blReference" placeholder="BL reference" />
+              <label>
+                Expected departure date from China
+                <input name="expectedDepartureDate" type="date" aria-label="Expected departure date from China" />
+              </label>
+              <label>
+                Expected arrival date at Pakistan port (ETA)
+                <input name="expectedArrivalDate" type="date" aria-label="Expected arrival date at Pakistan port" />
+              </label>
+              <label>
+                Estimated delivery date to customer
+                <input name="expectedDeliveryDate" type="date" aria-label="Estimated delivery date to customer" />
+              </label>
+              <p class="field-note">Arrival ETA is the expected port-arrival date. Delivery is a separate estimate for the customer and is not a confirmed promise.</p>
+              <button type="submit" class="primary-btn">Save loading details</button>
+            </form>
+          </article>
+          <article class="panel wide-panel" data-permission="shipments:read">
+            <div class="section-heading"><div><p class="eyebrow">Container register</p><h3>Loading portions by container</h3></div></div>
+            <div class="table-scroll"><table><thead><tr><th>Container</th><th>Loading date</th><th>Pakistan ETA</th><th>Lots</th><th>Cartons</th><th>Actions</th></tr></thead><tbody id="containerRows"></tbody></table></div>
+          </article>
+
+        </section>
+
+        <section class="content-grid page-view" data-page-view="status">
+          <article class="panel" id="status" data-permission="shipments:status">
+            <div class="section-heading"><div><p class="eyebrow">Milestone</p><h3>Update shipment status</h3></div></div>
+            <form id="statusForm">
+              <select name="shipmentId" id="statusShipment" required><option value="">Select shipment</option></select>
+              <select name="stage" required>
+                <option value="">Select milestone</option>
+                <option>China warehouse received</option>
+                <option>Awaiting loading</option>
+                <option>Loaded in container</option>
+                <option>Departed from China</option>
+                <option>In transit</option>
+                <option>Arrived at Pakistan port</option>
+                <option>Customs clearance in progress</option>
+                <option>Customs cleared</option>
+                <option>Transport dispatched</option>
+                <option>Delivered</option>
+              </select>
+              <textarea name="remarks" placeholder="Operational remarks"></textarea>
+              <button type="submit" class="primary-btn">Save status update</button>
+            </form>
+          </article>
+          <article class="panel" data-permission="containers:operate">
+            <div class="section-heading"><div><p class="eyebrow">Container milestone</p><h3>Update all cargo in a container</h3></div></div>
+            <form id="containerStatusForm">
+              <select name="containerNumber" id="statusContainer" required><option value="">Select container</option></select>
+              <select name="stage" required>
+                <option value="">Select milestone</option>
+                <option>Departed from China</option>
+                <option>In transit</option>
+                <option>Arrived at Pakistan port</option>
+                <option>Customs clearance in progress</option>
+                <option>Customs cleared</option>
+                <option>Transport dispatched</option>
+              </select>
+              <textarea name="remarks" placeholder="Operational remarks"></textarea>
+              <button type="submit" class="primary-btn">Update container cargo</button>
+            </form>
+          </article>
+
+        </section>
+
+        <section class="content-grid page-view" data-page-view="users">
+          <article class="panel" id="users" data-permission="users:manage">
+            <div class="section-heading"><div><p class="eyebrow">Access control</p><h3>User accounts</h3></div></div>
+            <form id="userForm" class="user-form">
+              <input name="username" placeholder="Username" minlength="3" maxlength="64" required />
+              <input name="password" type="password" placeholder="Temporary password (12+ characters)" minlength="12" required />
+              <select name="role" required>
+                <option value="warehouse">Warehouse</option>
+                <option value="operations">Pakistan operations</option>
+                <option value="delivery">Delivery team</option>
+                <option value="accounts">Accounts</option>
+                <option value="viewer">Read only</option>
+                <option value="admin">Administrator</option>
+              </select>
+              <button type="submit" class="primary-btn">Create account</button>
+            </form>
+            <div class="table-scroll"><table><thead><tr><th>Username</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody id="userRows"></tbody></table></div>
+          </article>
+        </section>
+
+        <section class="content-grid page-view" data-page-view="database" data-permission="database:manage">
+          <article class="panel">
+            <div class="section-heading">
+              <div><p class="eyebrow">Admin only · read-only</p><h3>Database explorer</h3></div>
+              <a class="download-link" href="/api/admin/database/backup">Download database backup</a>
+            </div>
+            <p class="field-note">Database file: <code id="databasePath">Loading…</code></p>
+            <p class="field-note">This console only runs SELECT, WITH or EXPLAIN queries. Data changes and schema edits are blocked.</p>
+            <div id="databaseTables" class="database-tables"></div>
+          </article>
+          <article class="panel">
+            <div class="section-heading"><div><p class="eyebrow">Read-only SQL</p><h3>Run a query</h3></div></div>
+            <form id="databaseQueryForm">
+              <label>SQL query<textarea id="databaseSql" name="sql" rows="7" spellcheck="false" required>SELECT customer_code, company_name, delivery_city
+FROM customers
+ORDER BY customer_code
+LIMIT 100;</textarea></label>
+              <button type="submit" class="primary-btn">Run query</button>
+            </form>
+            <p id="databaseQueryMessage" class="field-note" role="status"></p>
+            <div class="table-scroll"><table><thead id="databaseResultHead"></thead><tbody id="databaseResultRows"></tbody></table></div>
+          </article>
+        </section>
+
+        <section class="content-grid page-view billing-page" data-page-view="billing" data-permission="invoices:read">
+          <article class="panel">
+            <div class="section-heading"><div><p class="eyebrow">Accounts receivable</p><h3 id="invoiceFormTitle">Create invoice</h3></div></div>
+            <form id="invoiceForm" class="invoice-form" data-permission="invoices:write">
+              <label>Shipment<select name="shipmentId" id="invoiceShipment" required><option value="">Select shipment</option></select></label>
+              <label>Invoice number<input name="invoiceNumber" maxlength="64" placeholder="e.g. INV-2026-1201" required /></label>
+              <label>Invoice date<input name="invoiceDate" type="date" required /></label>
+              <label>Currency<select name="currency" required><option value="PKR">PKR</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="AED">AED</option><option value="CNY">CNY</option></select></label>
+              <label>Invoice total<input name="totalAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required /></label>
+              <label>Payment received<input name="receivedPayment" type="number" min="0" step="0.01" value="0" required /></label>
+              <label>Approval status<select name="status" required><option value="draft">Draft — awaiting approval</option><option value="issued">Approve and issue</option><option value="paid">Paid in full</option><option value="void">Void</option></select></label>
+              <div class="invoice-form-actions"><button type="submit" id="saveInvoiceBtn" class="primary-btn">Save invoice</button><button type="button" id="cancelInvoiceEdit" class="secondary-btn" hidden>Cancel edit</button></div>
+            </form>
+          </article>
+
+          <article class="panel invoice-register">
+            <div class="section-heading"><div><p class="eyebrow">Approved bills and drafts</p><h3>Invoice register</h3></div></div>
+            <div class="table-scroll"><table><thead><tr><th>Invoice</th><th>Date</th><th>Shipment</th><th>Customer</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody id="invoiceRows"></tbody></table></div>
+            <p class="empty-state" id="invoiceEmpty" hidden>No invoices created yet.</p>
+          </article>
+        </section>
+
+        <section class="content-grid page-view" data-page-view="audit" data-permission="audit:read">
+          <article class="panel wide-panel">
+            <div class="section-heading"><div><p class="eyebrow">Restricted · immutable history</p><h3>Record changes</h3></div><button id="refreshAuditBtn" class="secondary-btn">Refresh history</button></div>
+            <p class="field-note">Every logged operation includes its actor, timestamp and before/after values. Archived records remain in the database and can be restored by staff with the matching archive permission.</p>
+            <div class="table-scroll"><table><thead><tr><th>Date and time</th><th>Staff member</th><th>Action</th><th>Record</th><th>Before / after</th><th>Actions</th></tr></thead><tbody id="auditRows"></tbody></table></div>
+            <p class="empty-state" id="auditEmpty" hidden>No recorded changes.</p>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="passwordDialog" class="password-dialog">
+      <form id="passwordForm">
+        <div class="section-heading"><div><p class="eyebrow">Account security</p><h3>Change password</h3></div><button type="button" id="closePasswordBtn" class="icon-btn" aria-label="Close">×</button></div>
+        <label>Current password<input name="currentPassword" type="password" autocomplete="current-password" required /></label>
+        <label>New password<input name="newPassword" type="password" minlength="12" autocomplete="new-password" required /></label>
+        <p class="form-error" id="passwordError" role="alert" hidden></p>
+        <button type="submit" class="primary-btn">Update password</button>
+      </form>
+    </dialog>
+    <dialog id="passwordResetDialog" class="password-dialog">
+      <form id="passwordResetForm">
+        <div class="section-heading">
+          <div><p class="eyebrow">Super administrator</p><h3 id="passwordResetTitle">Set user password</h3></div>
+          <button type="button" id="closePasswordResetBtn" class="icon-btn" aria-label="Close">×</button>
+        </div>
+        <label>New password<input name="password" type="password" minlength="12" autocomplete="new-password" required /></label>
+        <label>Confirm new password<input name="confirmPassword" type="password" minlength="12" autocomplete="new-password" required /></label>
+        <p class="form-error" id="passwordResetError" role="alert" hidden></p>
+        <button type="submit" class="primary-btn">Set password</button>
+      </form>
+    </dialog>
+    <dialog id="permissionsDialog" class="permissions-dialog">
+      <form id="permissionsForm">
+        <div class="section-heading">
+          <div><p class="eyebrow">Per-user access</p><h3 id="permissionsTitle">Manage permissions</h3></div>
+          <button type="button" id="closePermissionsBtn" class="icon-btn" aria-label="Close">×</button>
+        </div>
+        <p id="permissionsRoleNote" class="field-note"></p>
+        <div id="permissionOptions" class="permission-options"></div>
+        <div class="dialog-actions">
+          <button type="submit" class="primary-btn">Save permissions</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="shipmentEditDialog" class="password-dialog">
+      <form id="shipmentEditForm">
+        <div class="section-heading"><div><p class="eyebrow">Cargo record</p><h3>Edit shipment</h3></div><button type="button" id="closeShipmentEditBtn" class="icon-btn" aria-label="Close">×</button></div>
+        <label>Tracking number<input name="trackingNumber" required /></label>
+        <label>Shipping mark<input name="shippingMark" /></label>
+        <label>Supplier name<input name="supplierName" /></label>
+        <label>Warehouse receiving date<input name="warehouseReceivingDate" type="date" required /></label>
+        <label>Goods description<input name="goodsDescription" required /></label>
+        <label>Cartons<input name="cartons" type="number" min="0" step="1" required /></label>
+        <label>Weight (kg)<input name="weightKg" type="number" min="0" step="0.01" required /></label>
+        <label>CBM<input name="cbm" type="number" min="0" step="0.01" required /></label>
+        <p class="field-note">Customer ownership and tracking identity links remain intact; carton quantity cannot be reduced below loaded cartons.</p>
+        <button type="submit" class="primary-btn">Save shipment changes</button>
+      </form>
+    </dialog>
+    <dialog id="containerPortionEditDialog" class="password-dialog">
+      <form id="containerPortionEditForm">
+        <div class="section-heading"><div><p class="eyebrow">Container portion</p><h3>Edit loading details</h3></div><button type="button" id="closeContainerPortionEditBtn" class="icon-btn" aria-label="Close">×</button></div>
+        <label>Container number<input name="containerNumber" required /></label>
+        <label>Loading date<input name="loadingDate" type="date" required /></label>
+        <label>Loaded cartons<input name="loadedCartons" type="number" min="1" step="1" required /></label>
+        <label>Departure port<input name="departurePort" /></label>
+        <label>Destination port<input name="destinationPort" /></label>
+        <label>Vessel<input name="vessel" /></label>
+        <label>Voyage<input name="voyage" /></label>
+        <label>BL reference<input name="blReference" /></label>
+        <label>Expected departure date<input name="expectedDepartureDate" type="date" /></label>
+        <label>Expected Pakistan port arrival (ETA)<input name="expectedArrivalDate" type="date" /></label>
+        <label>Estimated customer delivery date<input name="expectedDeliveryDate" type="date" /></label>
+        <button type="submit" class="primary-btn">Save loading portion</button>
+      </form>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
